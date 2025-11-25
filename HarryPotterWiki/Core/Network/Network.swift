@@ -7,44 +7,88 @@
 
 import Foundation
 
-enum NetworkError : Error {
-    case invalidResponse
-    case statusCode(Int)
-    case decoding(Error)
-    case other(Error)
-}
-
-protocol NetworkClient{
-    func get<T: Decodable> (_ url: URL, as type: T.Type) async throws -> T
-}
-
-final class URLSessionNetworkClient: NetworkClient{
-    private let session: URLSession
+enum NetworkError: Error {
+    case invalidURL
+    case noData
+    case decodingError(Error)
+    case serverError(statusCode: Int)
     
-    init(session: URLSession = .shared) {
-        self.session = session
+    var message: String {
+        switch self {
+        case .invalidURL:
+            return "Invalid URL"
+        case .noData:
+            return "No data received"
+        case .decodingError(let error):
+            return "Failed to decode: \(error.localizedDescription)"
+        case .serverError(let code):
+            return "Server error: \(code)"
+        }
     }
+}
+
+class NetworkService {
+    static let shared = NetworkService()
+    private let baseURL = "https://api.potterdb.com/v1"
     
+    private init() {}
     
-    func get<T>(_ url: URL, as type: T.Type) async throws -> T where T : Decodable {
+  
+    func fetchList<T: Codable>(
+        endpoint: String,
+        queryParameters: [String: String] = [:]
+    ) async throws -> APIResponse<T> {
+        
+        var components = URLComponents(string: baseURL + endpoint)
+        if !queryParameters.isEmpty {
+            components?.queryItems = queryParameters.map {
+                URLQueryItem(name: $0.key, value: $0.value)
+            }
+        }
+        
+        guard let url = components?.url else {
+            throw NetworkError.invalidURL
+        }
+        
+        let (data, response) = try await URLSession.shared.data(from: url)
+
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw NetworkError.serverError(statusCode: 0)
+        }
+        
+        guard (200...299).contains(httpResponse.statusCode) else {
+            throw NetworkError.serverError(statusCode: httpResponse.statusCode)
+        }
+        
+        // Decode JSON
         do {
-            let (data, response) = try await session.data(from: url)
-            guard let http = response as? HTTPURLResponse else {
-                throw NetworkError.invalidResponse
-            }
-            guard (200...299).contains(http.statusCode) else {
-                throw NetworkError.statusCode(http.statusCode)
-            }
-            do{
-                let decoded = try JSONDecoder().decode(T.self, from: data)
-                return decoded
-            } catch {
-                throw NetworkError.decoding(error)
-            }
-            
-        }catch{
-            throw NetworkError.other(error)
+            let decoder = JSONDecoder()
+            return try decoder.decode(APIResponse<T>.self, from: data)
+        } catch {
+            throw NetworkError.decodingError(error)
         }
     }
     
+    func fetchSingle<T: Codable>(
+        endpoint: String
+    ) async throws -> SingleAPIResponse<T> {
+        
+        guard let url = URL(string: baseURL + endpoint) else {
+            throw NetworkError.invalidURL
+        }
+        
+        let (data, response) = try await URLSession.shared.data(from: url)
+        
+        guard let httpResponse = response as? HTTPURLResponse,
+              (200...299).contains(httpResponse.statusCode) else {
+            throw NetworkError.serverError(statusCode: 0)
+        }
+        
+        do {
+            let decoder = JSONDecoder()
+            return try decoder.decode(SingleAPIResponse<T>.self, from: data)
+        } catch {
+            throw NetworkError.decodingError(error)
+        }
+    }
 }
