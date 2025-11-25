@@ -24,12 +24,21 @@ enum PotterEndpoint {
     var url: URL{
         switch self {
         case .characters(let page, let size, let filter, let sort):
-            var comps = URLComponents(url: PotterEndpoint.baseURL.appendingPathComponent("/v1/characters"), resolvingAgainstBaseURL: false)
-            guard var components = comps else {
+            var components = URLComponents(url: PotterEndpoint.baseURL.appendingPathComponent("/v1/characters"), resolvingAgainstBaseURL: false)
+            guard var comps = components else {
                 fatalError("Failed to build URLComponents for characters endpoint")
             }
             
             var items: [URLQueryItem] = []
+            
+            //When fetching too much content data will automatically paginate
+            if let page = page {
+                items.append(URLQueryItem(name: "page[number]", value: String(page)))
+            }
+            
+            if let size = size {
+                items.append(URLQueryItem(name: "page[size]", value: String(size)))
+            }
             
             //Filtering Character
             if let filter = filter, !filter.isEmpty{
@@ -41,10 +50,10 @@ enum PotterEndpoint {
             }
             
             if !items.isEmpty{
-                components.queryItems = items
+                comps.queryItems = items
             }
             
-            guard let finalURL = components.url else {
+            guard let finalURL = comps.url else {
                 fatalError("Failed to get URL from URLComponents for characters endpoint with query items \(items)")
             }
             return finalURL
