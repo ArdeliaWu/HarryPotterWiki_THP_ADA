@@ -11,17 +11,17 @@ enum PotterEndpoint {
     case books
     case book(bookId: String)
     case chapters(bookId: String)
+    case movies
+    case movie(movieId:String)
     case characters(page: Int? = nil, size: Int? = nil, filterNameContains: String? = nil, sort: String? = nil)
     case character(characterId : String)
-    case Movies
-    case Movie
-    case Potions
-    case Potion
-    case Spells
-    case Spell
+    case potions
+    case potion(potionId: String)
+    case spells
+    case spell(spellId: String)
     
     private static var baseURL : URL {
-        guard let url = URL(string: "https://api.potterdb.com") else {
+        guard let url = URL(string: "https://api.potterdb.com/v1") else {
             fatalError("Invalid base URL string for PotterDb API")
         }
         return url
@@ -29,6 +29,7 @@ enum PotterEndpoint {
     
     var url: URL{
         switch self {
+    
         case .characters(let page, let size, let filter, let sort):
             let components = URLComponents(url: PotterEndpoint.baseURL.appendingPathComponent("/v1/characters"), resolvingAgainstBaseURL: false)
             guard var comps = components else {
@@ -65,17 +66,36 @@ enum PotterEndpoint {
             return finalURL
             
             
-        case .character(let characterId):
-            return PotterEndpoint.baseURL.appendingPathComponent("/v1/characters/\(characterId)")
-            
         case .books:
-            return PotterEndpoint.baseURL.appendingPathComponent("/v1/books")
+            return PotterEndpoint.baseURL.appending(path: "/books")
             
         case .book(let bookId):
-            return PotterEndpoint.baseURL.appendingPathComponent("/v1/books/\(bookId)")
+            return PotterEndpoint.baseURL.appending(path: "/books/\(bookId)")
             
         case .chapters(let bookId):
-            return PotterEndpoint.baseURL.appendingPathComponent("/v1/books/\(bookId)/chapters")
+            return PotterEndpoint.baseURL.appending(path: "/books/\(bookId)/chapters")
+        
+        case .movies:
+            return PotterEndpoint.baseURL.appending(path: "/movies")
+            
+        case .movie(let movieId):
+            return PotterEndpoint.baseURL.appending(path: "/movies/\(movieId)")
+            
+        case .character(let characterId):
+            return PotterEndpoint.baseURL.appending(path: "/characters/\(characterId)")
+        
+        case .potions:
+            return PotterEndpoint.baseURL.appending(path: "/potions")
+            
+        case .potion(let potionId):
+            return PotterEndpoint.baseURL.appending(path: "/potions/\(potionId)")
+            
+        case .spells:
+            return PotterEndpoint.baseURL.appending(path: "/spells")
+        
+        case .spell(let spellId):
+            return PotterEndpoint.baseURL.appending(path:"/spells/\(spellId)")
+            
             
         }
     }
