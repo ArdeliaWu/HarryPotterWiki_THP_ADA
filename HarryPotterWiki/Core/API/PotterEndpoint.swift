@@ -13,6 +13,12 @@ enum PotterEndpoint {
     case chapters(bookId: String)
     case characters(page: Int? = nil, size: Int? = nil, filterNameContains: String? = nil, sort: String? = nil)
     case character(characterId : String)
+    case Movies
+    case Movie
+    case Potions
+    case Potion
+    case Spells
+    case Spell
     
     private static var baseURL : URL {
         guard let url = URL(string: "https://api.potterdb.com") else {
@@ -24,7 +30,7 @@ enum PotterEndpoint {
     var url: URL{
         switch self {
         case .characters(let page, let size, let filter, let sort):
-            var components = URLComponents(url: PotterEndpoint.baseURL.appendingPathComponent("/v1/characters"), resolvingAgainstBaseURL: false)
+            let components = URLComponents(url: PotterEndpoint.baseURL.appendingPathComponent("/v1/characters"), resolvingAgainstBaseURL: false)
             guard var comps = components else {
                 fatalError("Failed to build URLComponents for characters endpoint")
             }
