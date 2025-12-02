@@ -66,7 +66,8 @@ class CharactersViewModel: ObservableObject {
     }
     
     // Search characters by name
-    func searchCharacters(name: String) async {
-        await fetchCharacters(page: 1, nameFilter: name)
-    }
+//    func searchCharacters(name: String) async {
+//        await fetchCharacters(page: 1, nameFilter: name)
+//    }
+    
 }

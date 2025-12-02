@@ -8,18 +8,18 @@ import SwiftUI
 
 struct CharacterListView: View {
     @StateObject private var viewModel = CharactersViewModel()
-    @State private var searchText = ""
+//    @State private var searchText = ""
     
     var body: some View {
         NavigationStack {
             ZStack {
-                if viewModel.characters.isEmpty && !viewModel.isLoading {
-                    ContentUnavailableView(
-                        "No Characters Found",
-                        systemImage: "person.slash",
-                        description: Text("Try adjusting your search")
-                    )
-                } else {
+//                if viewModel.characters.isEmpty && !viewModel.isLoading {
+//                    ContentUnavailableView(
+//                        "No Characters Found",
+//                        systemImage: "person.slash",
+//                        description: Text("Try adjusting your search")
+//                    )
+//                } else {
                     List {
                         ForEach(viewModel.characters) { character in
                             NavigationLink(value: character) {
@@ -36,23 +36,23 @@ struct CharacterListView: View {
                                 }
                         }
                     }
-                    .searchable(text: $searchText, prompt: "Search characters")
-                    .onChange(of: searchText) { oldValue, newValue in
-                        Task {
-                            if newValue.isEmpty {
-                                await viewModel.fetchCharacters()
-                            } else {
-                                await viewModel.searchCharacters(name: newValue)
-                            }
-                        }
-                    }
-                }
+//                    .searchable(text: $searchText, prompt: "Search characters")
+//                    .onChange(of: searchText) { oldValue, newValue in
+//                        Task {
+//                            if newValue.isEmpty {
+//                                await viewModel.fetchCharacters()
+//                            } else {
+//                                await viewModel.searchCharacters(name: newValue)
+//                            }
+//                        }
+//                    }
+//                }
                 
                 if viewModel.isLoading && viewModel.characters.isEmpty {
                     ProgressView("Loading characters...")
                 }
             }
-            .navigationTitle("Potter DB")
+            .navigationTitle("Harry Potter Characters")
             .navigationDestination(for: Character.self) { character in
                 CharacterDetailView(character: character)
             }

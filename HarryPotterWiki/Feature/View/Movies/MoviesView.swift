@@ -1,56 +1,44 @@
 //
-//  BookView.swift
+//  MoviesView.swift
 //  HarryPotterWiki
 //
-//  Created by Ardelia on 25/11/25.
+//  Created by Ardelia on 02/12/25.
 //
 
 import SwiftUI
+
 import Combine
 
-struct BooksView: View {
-    @StateObject private var viewModel = BooksViewModel()
+struct MoviesView: View {
+    @StateObject private var viewModel = MovieViewModel()
     
     var body: some View {
         NavigationStack {
 //            TestNetworkView()
             Group {
                 if viewModel.isLoading {
-                    ProgressView("Loading books...")
+                    ProgressView("Loading movie...")
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
-                } else if viewModel.books.isEmpty {
+                } else if viewModel.movies.isEmpty {
                     ContentUnavailableView(
-                        "No Books Found",
+                        "No Movies Found",
                         systemImage: "book.closed",
                         description: Text("Unable to load Harry Potter books")
                     )
                 } else {
-                    List{
-                        ForEach (viewModel.books) { book in
-                            NavigationLink(value: book) {
-                                BookRowView(book: book)
-                            }
+                    List(viewModel.movies) { movie in
+                        NavigationLink(value: movie) {
+                            MovieRowView(movie: movie)
                         }
-                        
-                        if viewModel.hasMorePages{
-                            ProgressView()
-                                .frame(maxWidth: .infinity, alignment: .center)
-                                .task{
-                                    await viewModel.loadMoreBooks()
-                                }
-                        }
-                        
                     }
                 }
             }
             .navigationTitle("Harry Potter Books")
-            .navigationDestination(for: Book.self) { book in
-                ChaptersListView(book: book)
-            }
+//            .navigationDestination(for: movie.self) { book in
+//                ChaptersListView(book: book)
+//            }
             .task {
-                if viewModel.books.isEmpty{
-                    await viewModel.fetchBooks()
-                }
+                await viewModel.fetchMovies()
             }
             .alert("Error", isPresented: .constant(viewModel.errorMessage != nil)) {
                 Button("OK") {
@@ -63,14 +51,13 @@ struct BooksView: View {
     }
 }
 
-struct BookRowView: View {
-    let book: Book
+struct MovieRowView: View {
+    let movie: Movie
     
     var body: some View {
         HStack(spacing: 12) {
-            
             // Book cover image
-            AsyncImage(url: URL(string: book.attributes.cover ?? "")) { phase in
+            AsyncImage(url: URL(string: movie.attributes.poster ?? "")) { phase in
                 switch phase {
                 case .empty:
                     ProgressView()
@@ -94,27 +81,27 @@ struct BookRowView: View {
             
             // Book info
             VStack(alignment: .leading, spacing: 6) {
-                Text(book.attributes.title ?? "Untitled")
+                Text(movie.attributes.title ?? "Untitled")
                     .font(.headline)
                     .lineLimit(2)
                 
-                if let author = book.attributes.author {
-                    Text(author)
+                if let runningTime = movie.attributes.runningTime {
+                    Text(runningTime)
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                 }
                 
-                if let pages = book.attributes.pages {
-                    Text("\(pages) pages")
+                if let summary = movie.attributes.summary {
+                    Text(summary)
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
                 
-                if let releaseDate = book.attributes.releaseDate {
-                    Text(releaseDate)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
+//                if let releaseDate = movie.attributes.releaseDate {
+//                    Date(releaseDate)
+//                        .font(.caption)
+//                        .foregroundStyle(.secondary)
+//                }
             }
             
             Spacer()
@@ -123,30 +110,30 @@ struct BookRowView: View {
     }
 }
 
-struct TestNetworkView: View {
+struct TestMovieNetworkView: View {
     var body: some View {
         VStack {
-            Button("Test Fetch Books") {
+            Button("Test Fetch Movies") {
                 Task {
-                    await testFetchBooks()
+                    await testFetchMovies()
                 }
             }
         }
     }
     
-    func testFetchBooks() async {
+    func testFetchMovies() async {
         do {
-            let response: APIResponse<Book> = try await NetworkService.shared.fetchList(endpoint: "/books")
-            print("Success! Got \(response.data?.count ?? 0) books")
+            let response: APIResponse<Book> = try await NetworkService.shared.fetchList(endpoint: "/movies")
+            print("✅ Success! Got \(response.data?.count ?? 0) movies")
             
-            if let firstBook = response.data?.first {
-                print("First book: \(firstBook.attributes.title ?? "Unknown")")
+            if let firstMovie = response.data?.first {
+                print("📚 First movies: \(firstMovie.attributes.title ?? "Unknown")")
             }
             
         } catch let error as NetworkError {
-            print("Error: \(error.message)")
+            print("❌ Error: \(error.message)")
         } catch {
-            print("Unexpected error: \(error)")
+            print("❌ Unexpected error: \(error)")
         }
     }
 }
