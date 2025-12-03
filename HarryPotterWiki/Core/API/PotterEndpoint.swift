@@ -47,18 +47,18 @@ enum PotterEndpoint {
                 items.append(URLQueryItem(name: "page[size]", value: String(size)))
             }
             
-            //Filtering Character
-            if let filter = filter, !filter.isEmpty{
-                items.append(URLQueryItem(name: "filter[name_cont]", value: filter))
-            }
-            
-            if let sort = sort, !sort.isEmpty{
-                items.append(URLQueryItem(name: "sort", value: sort))
-            }
-            
-            if !items.isEmpty{
-                comps.queryItems = items
-            }
+//            //Filtering Character
+//            if let filter = filter, !filter.isEmpty{
+//                items.append(URLQueryItem(name: "filter[name_cont]", value: filter))
+//            }
+//            
+//            if let sort = sort, !sort.isEmpty{
+//                items.append(URLQueryItem(name: "sort", value: sort))
+//            }
+//            
+//            if !items.isEmpty{
+//                comps.queryItems = items
+//            }
             
             guard let finalURL = comps.url else {
                 fatalError("Failed to get URL from URLComponents for characters endpoint with query items \(items)")
@@ -83,14 +83,38 @@ enum PotterEndpoint {
                 items.append(URLQueryItem(name: "page[size]", value: String(size)))
             }
             
+            guard let finalURL = comps.url else {
+                fatalError("Failed to get URL from URLComponents for characters endpoint with query items \(items)")
+            }
+            return finalURL
+            
         case .book(let bookId):
             return PotterEndpoint.baseURL.appending(path: "books/\(bookId)")
             
         case .chapters(let bookId):
             return PotterEndpoint.baseURL.appending(path: "books/\(bookId)/chapters")
         
-        case .movies:
-            return PotterEndpoint.baseURL.appending(path: "movies")
+        case .movies(let page, let size):
+            let components = URLComponents(url: PotterEndpoint.baseURL.appending(path: "movies"), resolvingAgainstBaseURL: false)
+            guard var comps = components else {
+                fatalError("Failed to build URLComponents for characters endpoint")
+            }
+            
+            var items: [URLQueryItem] = []
+            
+            //When fetching too much content data will automatically paginate
+            if let page = page {
+                items.append(URLQueryItem(name: "page[number]", value: String(page)))
+            }
+            
+            if let size = size {
+                items.append(URLQueryItem(name: "page[size]", value: String(size)))
+            }
+            
+            guard let finalURL = comps.url else {
+                fatalError("Failed to get URL from URLComponents for characters endpoint with query items \(items)")
+            }
+            return finalURL
             
         case .movie(let movieId):
             return PotterEndpoint.baseURL.appending(path: "movies/\(movieId)")

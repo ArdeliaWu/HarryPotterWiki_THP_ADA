@@ -13,7 +13,7 @@ struct BooksView: View {
     
     var body: some View {
         NavigationStack {
-//            TestNetworkView()
+            //            TestNetworkView()
             Group {
                 if viewModel.isLoading {
                     ProgressView("Loading books...")
@@ -25,21 +25,28 @@ struct BooksView: View {
                         description: Text("Unable to load Harry Potter books")
                     )
                 } else {
-                    List{
-                        ForEach (viewModel.books) { book in
-                            NavigationLink(value: book) {
-                                BookRowView(book: book)
+                    ScrollView {
+                        LazyVStack(spacing: 12) {
+                            ForEach(viewModel.books) { book in
+                                NavigationLink(value: book) {
+                                    BookRowView(book: book)
+                                }
+                                .buttonStyle(.plain)
+                                
+                                // Load more when reaching bottom
+                                if book.id == viewModel.books.last?.id {
+                                    if viewModel.hasMorePages {
+                                        ProgressView()
+                                            .frame(maxWidth: .infinity)
+                                            .padding()
+                                            .task {
+                                                await viewModel.loadMoreBooks()
+                                            }
+                                    }
+                                }
                             }
                         }
-                        
-                        if viewModel.hasMorePages{
-                            ProgressView()
-                                .frame(maxWidth: .infinity, alignment: .center)
-                                .task{
-                                    await viewModel.loadMoreBooks()
-                                }
-                        }
-                        
+                        .padding()
                     }
                 }
             }

@@ -76,3 +76,4 @@ struct ChapterRowView: View {
         .padding(.vertical, 4)
     }
 }
+

@@ -6,7 +6,6 @@
 //
 
 import SwiftUI
-
 import Combine
 
 struct MoviesView: View {
@@ -14,38 +13,45 @@ struct MoviesView: View {
     
     var body: some View {
         NavigationStack {
-//            TestNetworkView()
             Group {
-                if viewModel.isLoading {
-                    ProgressView("Loading movie...")
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                if viewModel.isLoading && viewModel.movies.isEmpty {
+                    ProgressView("Loading movies...")
                 } else if viewModel.movies.isEmpty {
                     ContentUnavailableView(
                         "No Movies Found",
-                        systemImage: "book.closed",
-                        description: Text("Unable to load Harry Potter books")
+                        systemImage: "film"
                     )
                 } else {
-                    List(viewModel.movies) { movie in
-                        NavigationLink(value: movie) {
-                            MovieRowView(movie: movie)
+                    ScrollView {
+                        LazyVStack(spacing: 12) {
+                            ForEach(viewModel.movies) { movie in
+                                MovieRowView(movie: movie)
+                                
+                                if movie.id == viewModel.movies.last?.id {
+                                    if viewModel.hasMorePages {
+                                        ProgressView()
+                                            .frame(maxWidth: .infinity)
+                                            .padding()
+                                            .task {
+                                                await viewModel.loadMoreMovies()
+                                            }
+                                    }
+                                }
+                            }
+                            
+                            
                         }
+                        .padding()
+                        
+                        
                     }
                 }
             }
-            .navigationTitle("Harry Potter Books")
-//            .navigationDestination(for: movie.self) { book in
-//                ChaptersListView(book: book)
-//            }
+            .navigationTitle("Movies")
             .task {
-                await viewModel.fetchMovies()
-            }
-            .alert("Error", isPresented: .constant(viewModel.errorMessage != nil)) {
-                Button("OK") {
-                    viewModel.errorMessage = nil
+                if viewModel.movies.isEmpty {
+                    await viewModel.fetchMovies()
                 }
-            } message: {
-                Text(viewModel.errorMessage ?? "")
             }
         }
     }
@@ -56,84 +62,49 @@ struct MovieRowView: View {
     
     var body: some View {
         HStack(spacing: 12) {
-            // Book cover image
             AsyncImage(url: URL(string: movie.attributes.poster ?? "")) { phase in
                 switch phase {
-                case .empty:
-                    ProgressView()
-                        .frame(width: 60, height: 90)
                 case .success(let image):
-                    image
-                        .resizable()
-                        .aspectRatio(contentMode: .fill)
-                        .frame(width: 60, height: 90)
-                        .clipShape(RoundedRectangle(cornerRadius: 8))
-                case .failure:
-                    Image(systemName: "book.closed.fill")
+                    image.resizable().aspectRatio(contentMode: .fill)
+                case .failure, .empty:
+                    Image(systemName: "film.fill")
                         .resizable()
                         .scaledToFit()
-                        .frame(width: 60, height: 90)
                         .foregroundStyle(.gray)
                 @unknown default:
                     EmptyView()
                 }
             }
+            .frame(width: 60, height: 90)
+            .clipShape(RoundedRectangle(cornerRadius: 8))
             
-            // Book info
             VStack(alignment: .leading, spacing: 6) {
                 Text(movie.attributes.title ?? "Untitled")
                     .font(.headline)
                     .lineLimit(2)
                 
-                if let runningTime = movie.attributes.runningTime {
-                    Text(runningTime)
+                if let releaseDate = movie.attributes.releaseDate {
+                    Text(releaseDate)
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                 }
                 
-                if let summary = movie.attributes.summary {
-                    Text(summary)
+                if let runtime = movie.attributes.runningTime {
+                    Text(runtime)
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
-                
-//                if let releaseDate = movie.attributes.releaseDate {
-//                    Date(releaseDate)
-//                        .font(.caption)
-//                        .foregroundStyle(.secondary)
-//                }
             }
             
             Spacer()
         }
-        .padding(.vertical, 8)
+        .padding()
+        .background(Color(.systemBackground))
+        .cornerRadius(12)
+        .shadow(color: .black.opacity(0.1), radius: 2, x: 0, y: 1)
     }
 }
 
-struct TestMovieNetworkView: View {
-    var body: some View {
-        VStack {
-            Button("Test Fetch Movies") {
-                Task {
-                    await testFetchMovies()
-                }
-            }
-        }
-    }
-    
-    func testFetchMovies() async {
-        do {
-            let response: APIResponse<Book> = try await NetworkService.shared.fetchList(endpoint: "/movies")
-            print("✅ Success! Got \(response.data?.count ?? 0) movies")
-            
-            if let firstMovie = response.data?.first {
-                print("📚 First movies: \(firstMovie.attributes.title ?? "Unknown")")
-            }
-            
-        } catch let error as NetworkError {
-            print("❌ Error: \(error.message)")
-        } catch {
-            print("❌ Unexpected error: \(error)")
-        }
-    }
+#Preview {
+    MoviesView()
 }

@@ -66,7 +66,7 @@ class BooksViewModel: ObservableObject {
     }
     
     func loadMoreBooks() async {
-        guard hasMorePages, !isLoading else { return }
+        guard !isLoading, hasMorePages else { return }
         await fetchBooks(page: currentPage + 1)
     }
 }

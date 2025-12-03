@@ -15,19 +15,19 @@ struct HomeView: View {
             BooksView()
             
             TabView{
-                Tab("Books", systemImage: "text.book.closed.fill"){
+                Tab("Books", systemImage: "book"){
                     BooksView()
                 }
-                Tab("Characters", systemImage: "person.fill"){
+                Tab("Characters", systemImage: "person.3"){
                     CharacterListView()
                 }
-                Tab("Movies", systemImage: "text.book.closed.fill"){
+                Tab("Movies", systemImage: "film"){
                     MoviesView()
                 }
-                Tab("Potions", systemImage: "text.book.closed.fill"){
+                Tab("Potions", systemImage: "flask"){
                     PotionsView()
                 }
-                Tab("Spells", systemImage: "text.book.closed.fill"){
+                Tab("Spells", systemImage: "wand.and.sparkles"){
                     SpellsView()
                 }
             }

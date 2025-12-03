@@ -25,7 +25,7 @@ struct Movie: Codable, Identifiable, Hashable{
         let poster: String?
         let producers: [String]?
         let rating: String?
-        let releaseDate: Date?
+        let releaseDate: String?
         let runningTime: String?
         let screenwriters: [String]?
         let summary: String?

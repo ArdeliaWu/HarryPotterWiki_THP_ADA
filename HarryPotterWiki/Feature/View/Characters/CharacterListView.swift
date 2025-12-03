@@ -103,3 +103,7 @@ struct CharacterRowView: View {
         .padding(.vertical, 4)
     }
 }
+
+#Preview{
+    CharacterListView()
+}
