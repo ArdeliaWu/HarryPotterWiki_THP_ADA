@@ -1,63 +1,57 @@
 //
-//  BookViewModel.swift
+//  MovieViewModel.swift
 //  HarryPotterWiki
 //
-//  Created by Ardelia on 25/11/25.
+//  Created by Ardelia on 01/12/25.
 //
 
 import Foundation
 import Combine
 
 @MainActor
-class BooksViewModel: ObservableObject {
-    @Published var books: [Book] = []
+class MovieViewModel: ObservableObject {
+    @Published var movies: [Movie] = []
     @Published var isLoading = false
     @Published var errorMessage: String?
     @Published var currentPage = 1
     @Published var hasMorePages = true
+
     
     private let networkService = NetworkService.shared
     
     // Fetch all books
-    func fetchBooks(
+    func fetchMovies(
         page: Int = 1,
-        pageSize: Int = 25,
+        pageSize: Int = 50
     ) async {
         isLoading = true
         errorMessage = nil
         
-        var queryParams: [String: String] = [
-            "page[number]" : "\(page)",
-            "page[size]" : "\(pageSize)"
-        ]
-        
         do {
-            let response: APIResponse<Book> = try await networkService.fetchList(
-                endpoint: "/books",//or from: .books,
-                queryParameters: queryParams
-                
+            let response: APIResponse<Movie> = try await networkService.fetchList(
+                endpoint: "/movies",
+                queryParameters: [
+                    "page[number]" : "\(page)",
+                    "page[size]": "\(pageSize)",
+                ]
             )
             
             if page == 1{
-                books = response.data ?? []
+                movies = response.data ?? []
             } else {
-                books.append(contentsOf: response.data ?? [])
+                movies.append(contentsOf: response.data ?? [])
             }
             
             currentPage = page
             hasMorePages = response.links?.next != nil
-           
             
             if let pagination = response.meta? .pagination{
                 print("Page \(pagination.current ?? 1) of \(pagination.last ?? 1)")
-                print("Total books: \(pagination.records ?? 0)")
-                
-                
+                print("Total movies: \(pagination.records ?? 0)")
             }
             
         } catch let error as NetworkError {
             errorMessage = error.message
-            print("Error : \(error.message)")
         } catch {
             errorMessage = "An unexpected error occurred"
         }
@@ -65,8 +59,8 @@ class BooksViewModel: ObservableObject {
         isLoading = false
     }
     
-    func loadMoreBooks() async {
+    func loadMoreMovies() async {
         guard !isLoading, hasMorePages else { return }
-        await fetchBooks(page: currentPage + 1)
+        await fetchMovies(page: currentPage + 1)
     }
 }

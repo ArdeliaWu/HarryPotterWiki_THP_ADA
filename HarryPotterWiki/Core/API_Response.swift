@@ -34,12 +34,11 @@ struct Links: Codable {
 
 struct Meta: Codable {
     let pagination: Pagination?
-    let copyright: String?
     let generatedAt: String?
     
     enum CodingKeys: String, CodingKey {
-        case pagination, copyright
-        case generatedAt = "generated_at"
+        case pagination
+        case generatedAt = "generated_at"//Timestamp when the response was generated
     }
 }
 

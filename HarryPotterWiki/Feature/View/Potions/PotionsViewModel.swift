@@ -1,37 +1,36 @@
 //
-//  ChapterViewModel.swift
+//  PotionsViewModel.swift
 //  HarryPotterWiki
 //
-//  Created by Ardelia on 25/11/25.
+//  Created by Ardelia on 01/12/25.
 //
 
 import Foundation
 import Combine
 
 @MainActor
-class ChaptersViewModel: ObservableObject {
-    @Published var chapters: [Chapter] = []
+class PotionsViewModel: ObservableObject {
+    @Published var potions: [Potion] = []
     @Published var isLoading = false
     @Published var errorMessage: String?
     
     private let networkService = NetworkService.shared
     
-    // Fetch chapters for a specific book
-    func fetchChapters(bookId: String) async {
+    // Fetch all books
+    func fetchPotions() async {
         isLoading = true
         errorMessage = nil
         
         do {
-            let response: APIResponse<Chapter> = try await networkService.fetchList(
-                endpoint: "/books/\(bookId)/chapters",
+            let response: APIResponse<Potion> = try await networkService.fetchList(
+                endpoint: "/potions",
                 queryParameters: [
                     "page[number]" : "1",
                     "page[size]": "25",
                 ]
             )
             
-            chapters = response.data ?? []
-            print ("Loaded \(chapters.count) chapters")
+            potions = response.data ?? []
             
         } catch let error as NetworkError {
             errorMessage = error.message

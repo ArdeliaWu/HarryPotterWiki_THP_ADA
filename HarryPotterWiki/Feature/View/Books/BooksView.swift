@@ -13,6 +13,7 @@ struct BooksView: View {
     
     var body: some View {
         NavigationStack {
+            //            TestNetworkView()
             Group {
                 if viewModel.isLoading {
                     ProgressView("Loading books...")
@@ -24,10 +25,28 @@ struct BooksView: View {
                         description: Text("Unable to load Harry Potter books")
                     )
                 } else {
-                    List(viewModel.books) { book in
-                        NavigationLink(value: book) {
-                            BookRowView(book: book)
+                    ScrollView {
+                        LazyVStack(spacing: 12) {
+                            ForEach(viewModel.books) { book in
+                                NavigationLink(value: book) {
+                                    BookRowView(book: book)
+                                }
+                                .buttonStyle(.plain)
+                                
+                                // Load more when reaching bottom
+                                if book.id == viewModel.books.last?.id {
+                                    if viewModel.hasMorePages {
+                                        ProgressView()
+                                            .frame(maxWidth: .infinity)
+                                            .padding()
+                                            .task {
+                                                await viewModel.loadMoreBooks()
+                                            }
+                                    }
+                                }
+                            }
                         }
+                        .padding()
                     }
                 }
             }
@@ -36,7 +55,9 @@ struct BooksView: View {
                 ChaptersListView(book: book)
             }
             .task {
-                await viewModel.fetchBooks()
+                if viewModel.books.isEmpty{
+                    await viewModel.fetchBooks()
+                }
             }
             .alert("Error", isPresented: .constant(viewModel.errorMessage != nil)) {
                 Button("OK") {
@@ -54,6 +75,7 @@ struct BookRowView: View {
     
     var body: some View {
         HStack(spacing: 12) {
+            
             // Book cover image
             AsyncImage(url: URL(string: book.attributes.cover ?? "")) { phase in
                 switch phase {
@@ -105,5 +127,33 @@ struct BookRowView: View {
             Spacer()
         }
         .padding(.vertical, 8)
+    }
+}
+
+struct TestNetworkView: View {
+    var body: some View {
+        VStack {
+            Button("Test Fetch Books") {
+                Task {
+                    await testFetchBooks()
+                }
+            }
+        }
+    }
+    
+    func testFetchBooks() async {
+        do {
+            let response: APIResponse<Book> = try await NetworkService.shared.fetchList(endpoint: "/books")
+            print("Success! Got \(response.data?.count ?? 0) books")
+            
+            if let firstBook = response.data?.first {
+                print("First book: \(firstBook.attributes.title ?? "Unknown")")
+            }
+            
+        } catch let error as NetworkError {
+            print("Error: \(error.message)")
+        } catch {
+            print("Unexpected error: \(error)")
+        }
     }
 }
